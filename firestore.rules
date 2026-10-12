@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function owner(uid) { return request.auth != null && request.auth.uid == uid; }
+    match /users/{uid}/finance/{document} {
+      allow read, delete: if owner(uid);
+      allow create, update: if owner(uid) && request.resource.data.ownerId == uid;
+    }
+    match /users/{uid}/financeVersions/{version} {
+      allow read, delete: if owner(uid);
+      allow create: if owner(uid) && request.resource.data.ownerId == uid;
+      allow update: if false;
+      match /chunks/{chunk} {
+        allow read, delete: if owner(uid);
+        allow create: if owner(uid) && request.resource.data.ownerId == uid
+          && request.resource.data.data is string && request.resource.data.data.size() <= 250000;
+        allow update: if false;
+      }
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

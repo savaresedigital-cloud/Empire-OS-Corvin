@@ -1,0 +1,31 @@
+.finance-wealth .wealth-estimates{margin:0 0 20px;padding:12px 17px;border:1px solid #415246;border-radius:6px;background:#20312755}
+.finance-wealth .wealth-estimates summary{padding:4px 0}
+.finance-wealth .wealth-estimates .finance-rows{margin-top:14px}
+.wealth-record-row>strong{white-space:nowrap;font-variant-numeric:tabular-nums}
+.wealth-record-row>.finance-actions{justify-content:flex-end}
+.wealth-loan-toolbar{padding:12px 15px;border:1px solid #3e544b;border-radius:6px;background:#1b3029}
+.finance-loan-dialog .finance-form{padding-bottom:0}
+.wealth-history-chart{margin:18px 0 16px;min-width:0;overflow:hidden}
+.wealth-history-chart svg{width:100%;height:170px;display:block;overflow:visible}
+.wealth-history-line{stroke:#a7b88e;stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+.wealth-history-point{fill:#d2c49b;stroke:#182b28;stroke-width:2}
+.wealth-zero{stroke:#617466;stroke-width:1;stroke-dasharray:4 6;opacity:.6}
+.wealth-history-labels{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:10px;color:#a6b8a8}
+.wealth-history-labels>span:nth-child(2){font-size:9px;color:#829b89;text-align:center}
+.wealth-goal-card>h2{font-size:18px;line-height:1.5;overflow-wrap:anywhere}
+.wealth-goal-card .finance-alert{margin-top:16px;margin-bottom:12px;padding:10px;font-size:10px}
+.wealth-goal-card .finance-alert>svg{flex-shrink:0}
+.wealth-goal-card>small{display:block;font-size:10px;line-height:1.6}
+.wealth-progress-unverified>span{background:repeating-linear-gradient(120deg,#b9aa75 0,#b9aa75 5px,#716b46 5px,#716b46 9px)}
+.wealth-goal-scenario{display:flex;flex-direction:column;gap:10px;padding-top:8px}
+.wealth-goal-scenario label,.wealth-simulator-fields label{display:flex;flex-direction:column;gap:8px;min-width:0;font-size:11px;color:#c1d2c2}
+.wealth-goal-scenario input,.wealth-simulator-fields input{width:100%;min-width:0;font-size:13px}
+.wealth-simulator>header>div{min-width:0}
+.wealth-simulator>header p{margin-top:8px}
+.wealth-simulator-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 16px;margin-bottom:22px}
+.wealth-simulator-results{margin-top:24px;margin-bottom:17px}
+.wealth-simulator-help{margin-top:15px}
+.wealth-simulator .finance-alert{margin-top:16px}
+@media(max-width:1100px){.wealth-simulator-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.wealth-record-row{flex-wrap:wrap}.wealth-record-row>.finance-actions{width:100%;justify-content:flex-start}}
+@media(max-width:760px){.wealth-history-chart svg{height:135px}.wealth-history-labels{font-size:8px}.wealth-history-labels>span:nth-child(2){font-size:8px}.wealth-simulator-fields{gap:16px 12px}.wealth-simulator-fields input,.wealth-goal-scenario input{font-size:16px}.wealth-simulator>header{flex-wrap:wrap}.wealth-simulator .finance-stat>strong{font-size:24px}.wealth-loan-toolbar .button{width:100%;justify-content:center}.wealth-goal-card>h2{font-size:18px}.wealth-record-row>.finance-actions .button{min-height:42px}}
+@media(max-width:390px){.wealth-simulator-fields{grid-template-columns:1fr}}

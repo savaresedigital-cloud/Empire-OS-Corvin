@@ -1,0 +1,8 @@
+EMPIRE OS · CORVIN
+
+Codice pronto per GitHub. Leggi README.md per caricamento e avvio.
+
+App privata online:
+https://empire-os-personale.wigglycow9.chatgpt.site/#today
+
+I dati personali e le chiavi non sono nello ZIP. La copia locale parte con un archivio separato.
