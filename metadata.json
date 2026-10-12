@@ -1,0 +1,7 @@
+{
+  "name": "Empire OS — Il tuo mondo",
+  "description": "Il tuo mondo, al tuo ritmo. Attività, progetti e finanze in uno spazio dark fantasy personale.",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

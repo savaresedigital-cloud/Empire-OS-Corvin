@@ -34,7 +34,30 @@ export function TodayWorkspace({ state, commit, onEdit, onToggle, onPriority, na
   };
   return <div className="home-world personal-home">
     <div className="home-sanctuary" aria-hidden="true"/>
-    <h1 className="home-accessible-title">Oggi</h1>
+    <header className="world-hero">
+      <div className="world-hero-art" aria-hidden="true" />
+      <div className="world-hero-content">
+        <div className="world-date">
+          <span />
+          <span>{new Intl.DateTimeFormat('it-IT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Rome' }).format(new Date())}</span>
+          <i>Santuario di Corvin</i>
+        </div>
+        <span className="hero-overline">EMPIRE OS · SPAZIO PERSONALE SOVRANO</span>
+        <h1>Benvenuto nel tuo <span>Santuario</span>, {state.settings?.name || 'Alessandro'}</h1>
+        <p className="hero-copy">Il tuo mondo, al tuo ritmo. Attività, progetti e finanze raccolti sotto il sigillo dell'impero.</p>
+        <div className="hero-actions">
+          <button className="button primary" onClick={() => onEdit({})}>
+            <Plus size={16} /> Nuova attività
+          </button>
+          <button className="text-button hero-add" onClick={choose}>
+            <CalendarDays size={14} /> Scegli priorità
+          </button>
+        </div>
+      </div>
+      <div className="world-hero-caption" aria-hidden="true">
+        <EmpireMark size={16} /> SANTUARIO DI CORVIN · SIGILLO DELL'IMPERO
+      </div>
+    </header>
     <AssistantWorkspace {...{state,commit,backend,useSpeech,navigate}}/>
     <div className="home-main-grid">
       <section className="panel home-priorities"><div className="home-panel-heading"><div><span className="section-eyebrow"><CalendarDays size={13}/>AGENDA</span><h2>Oggi</h2></div><span className="quiet-badge">{done} / {selected.length} fatte</span></div>

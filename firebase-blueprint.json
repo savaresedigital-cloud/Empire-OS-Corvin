@@ -1,0 +1,53 @@
+{
+  "entities": {
+    "Task": {
+      "title": "Task",
+      "description": "Un'attività dell'Impero in uno dei quattro Domini.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "notes": { "type": "string" },
+        "areaId": { "type": "string", "enum": ["personale", "zerilli", "rep", "business"] },
+        "projectId": { "type": "string" },
+        "priority": { "type": "string", "enum": ["high", "normal", "low"] },
+        "status": { "type": "string", "enum": ["todo", "done"] },
+        "dueAt": { "type": "string" },
+        "reminderAt": { "type": "string" },
+        "recurrenceRule": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "title"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "Un progetto imperiale con obiettivo e area di appartenenza.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "goal": { "type": "string" },
+        "areaId": { "type": "string", "enum": ["personale", "zerilli", "rep", "business"] }
+      },
+      "required": ["id", "title", "areaId"]
+    },
+    "EmpireData": {
+      "title": "EmpireData",
+      "description": "Documento aggregato o collezione per tasks, agenda, finanze e memorie del Consigliere.",
+      "type": "object",
+      "properties": {
+        "data": { "type": "object" },
+        "ownerId": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "version": { "type": "string" }
+      },
+      "required": ["data"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/empire/{collectionName}": {
+      "schema": "EmpireData",
+      "description": "Collezioni personali sincronizzate di Empire OS (agenda, priorità, domini, finanze, progetti, note del Consigliere)."
+    }
+  }
+}
