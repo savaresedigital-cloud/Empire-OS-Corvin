@@ -17,10 +17,91 @@ import { IncomeInsights, WealthProgress } from './finance-insights.jsx';
 import { CashPlanning } from './finance-planning.jsx';
 import { periodLabel } from './finance-planning.js';
 
+import { InlineAgentChart } from './agent-hub.jsx';
+import { yearlySummaries } from './empire-agent.js';
+
 const uid = () => crypto.randomUUID();
 export const formatMoney = (value, currency = 'EUR') => value === null || value === undefined ? '—' : new Intl.NumberFormat('it-IT', { style: 'currency', currency }).format(value / 100);
 const itemName = (items, id) => items.find(x => x.id === id)?.name || '—';
-const views = [['overview', 'Riepilogo'], ['transactions', 'Movimenti'], ['accounts', 'Conti'], ['planning', 'Prospetti'], ['wealth', 'Patrimonio'], ['budgets', 'Limiti di spesa'], ['goals', 'Obiettivi'], ['business', 'Business'], ['analysis', 'Analisi'], ['imports', 'Importazioni']];
+const views = [['overview', 'Statistiche'], ['transactions', 'Transazioni'], ['accounts', 'Conti'], ['planning', 'Prospetti'], ['wealth', 'Patrimonio'], ['budgets', 'Limiti di spesa'], ['goals', 'Obiettivi'], ['business', 'Business'], ['analysis', 'Analisi'], ['imports', 'Importazioni']];
+
+function YearlyProgressCard({ state, currency, onSelectYear }) {
+  const rows = yearlySummaries(state, currency);
+  if (!rows.length) return null;
+  const chart = {
+    kind: 'yearly-bars',
+    title: `La tua crescita anno per anno (${rows[0].year} – ${rows.at(-1).year})`,
+    subtitle: 'Tutti i 2.202 movimenti reali Money Manager · Clicca un anno qui sotto per isolarlo',
+    rows: rows.map(r => ({ label: r.year, incomeCents: r.incomeCents, expenseCents: r.expenseCents, netCents: r.netCents })),
+  };
+  return (
+    <section className="panel yearly-progress-section" style={{ padding: 22, marginBottom: 22 }}>
+      <InlineAgentChart chart={chart} />
+      <div className="yearly-pills-row">
+        {rows.map(r => (
+          <button type="button" key={r.year} className="yearly-pill" onClick={() => onSelectYear(r.year)}>
+            <strong>{r.year}</strong>
+            <span>Entrate {formatMoney(r.incomeCents, currency)}</span>
+            <small className={r.netCents >= 0 ? 'pos' : 'neg'}>Netto {r.netCents >= 0 ? '+' : ''}{formatMoney(r.netCents, currency)}</small>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function HousingSimulatorCard({ state }) {
+  const [rent, setRent] = useState(500);
+  const [utilities, setUtilities] = useState(140);
+  const y2026 = F.financialReport(state, { start: '2026-01-01', end: todayKey(), currency: 'EUR' });
+  const elapsedMonths = Math.max(1, Number(todayKey().slice(5, 7)));
+  const avgIncome = Math.round((y2026.incomeCents / 100) / elapsedMonths);
+  const avgExpense = Math.round((y2026.expenseCents / 100) / elapsedMonths);
+  const currentMonthlyNet = avgIncome - avgExpense;
+  const projectedMargin = currentMonthlyNet - rent - utilities;
+  const liquidity = (y2026.liquidityCents || 0) / 100;
+  const target = 6000;
+  const pct = Math.min(100, Math.round((liquidity / target) * 100));
+
+  return (
+    <section className="panel housing-sim-card" style={{ padding: 24, marginBottom: 22 }}>
+      <div className="proposal-header">
+        <div>
+          <span className="section-eyebrow">PROGETTO VITA · VIVERE DA SOLO</span>
+          <h2 style={{ fontFamily: 'var(--display)', fontSize: 28, margin: '6px 0 4px', color: '#f0e1cb' }}>Simulatore Sostenibilità & Indipendenza</h2>
+          <p style={{ fontSize: 12 }}>Calcolato sulle tue medie reali 2026 (Entrate medie ~{avgIncome} €/mese · Spese attuali ~{avgExpense} €/mese · Risparmio medio ~{currentMonthlyNet} €/mese)</p>
+        </div>
+        <span className="quiet-badge">Liquidità pronta: {formatMoney(y2026.liquidityCents, 'EUR')} ({pct}% del target 6.000 €)</span>
+      </div>
+      <div className="housing-sliders-grid">
+        <label className="housing-slider">
+          <div><span>Canone Affitto Mensile ipotizzato</span><strong>{rent} € / mese</strong></div>
+          <input type="range" min="250" max="950" step="25" value={rent} onChange={e => setRent(Number(e.target.value))} />
+        </label>
+        <label className="housing-slider">
+          <div><span>Bollette & Spese Casa extra</span><strong>{utilities} € / mese</strong></div>
+          <input type="range" min="50" max="350" step="10" value={utilities} onChange={e => setUtilities(Number(e.target.value))} />
+        </label>
+      </div>
+      <div className="housing-result-strip">
+        <div>
+          <small>COSTO CASA TOTALE</small>
+          <strong>{rent + utilities} € / mese</strong>
+        </div>
+        <div>
+          <small>MARGINE MENSILE RESIDUO</small>
+          <strong style={{ color: projectedMargin >= 0 ? '#a8d5ba' : '#e9aca5' }}>
+            {projectedMargin >= 0 ? `+${projectedMargin} € / mese` : `${projectedMargin} € / mese`}
+          </strong>
+        </div>
+        <div>
+          <small>AUTONOMIA CUSCINETTO ATTUALE</small>
+          <strong>{Math.max(1, Math.floor(liquidity / Math.max(1, rent + utilities)))} mesi coperti</strong>
+        </div>
+      </div>
+    </section>
+  );
+}
 function download(name, content, type = 'application/json') { const url = URL.createObjectURL(new Blob([content], { type })); const a = document.createElement('a'); a.href = url; a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(url), 2000); }
 function Modal({ title, children, close, wide = false }) { const ref = useRef(); React.useEffect(() => { ref.current.showModal(); return () => ref.current?.close(); }, []); return <dialog ref={ref} className={`modal ${wide ? 'wide' : ''}`} onCancel={close} onClick={e => { if (e.target === ref.current) close(); }}><header><h2>{title}</h2><button className="icon-button" onClick={close} aria-label="Chiudi finestra"><X size={20}/></button></header>{children}</dialog>; }
 function Empty({ text, action, onClick }) { return <div className="finance-empty"><Wallet size={26} strokeWidth={1.2}/><p>{text}</p>{action && <button className="button secondary" onClick={onClick}><Plus size={15}/>{action}</button>}</div>; }
@@ -31,10 +112,10 @@ function monthlyData(state, period, currency) { const map = new Map(); const sta
 function CashChart({ state, period, currency }) { const rows = monthlyData(state,period,currency); const max = Math.max(1,...rows.flatMap(r => [r.income,r.expense])); return <section className="finance-card"><header><h2>Entrate e uscite</h2><span className="finance-muted">{period.start} — {period.end} · {currency}</span></header><div className="finance-chart-bars" role="img" aria-label={rows.map(r => `${r.month}: entrate ${formatMoney(r.income,currency)}, uscite ${formatMoney(r.expense,currency)}`).join('; ')}>{rows.map(row => <div className="finance-bar-group" key={row.month}><div><span title={`Entrate ${formatMoney(row.income,currency)}`} style={{height:`${row.income/max*100}%`}}/><span title={`Uscite ${formatMoney(row.expense,currency)}`} style={{height:`${row.expense/max*100}%`}}/></div><small>{row.month.slice(5)}/{row.month.slice(2,4)}</small></div>)}</div><div className="finance-legend"><span>Entrate</span><span>Uscite</span></div><details className="chart-data"><summary>Dati del grafico</summary><table><thead><tr><th>Mese</th><th>Entrate</th><th>Uscite</th></tr></thead><tbody>{rows.map(r => <tr key={r.month}><td>{r.month}</td><td>{formatMoney(r.income,currency)}</td><td>{formatMoney(r.expense,currency)}</td></tr>)}</tbody></table></details></section>; }
 function CategoryChart({ state, period, currency, drill }) { const rows = F.financialReport(state,{...period,currency}).categories.map(c=>({id:c.categoryId,name:c.name,value:c.spentCents})).filter(c=>c.value>0); const max = Math.max(1,...rows.map(r=>r.value)); return <section className="finance-card"><header><h2>Uscite per categoria</h2><span className="finance-muted">{currency} · Rimborsi detratti dal costo</span></header>{rows.length ? <div className="finance-category-bars">{rows.slice(0,10).map(r=><button onClick={()=>drill(r.id)} key={r.id}><span>{r.name}</span><strong>{formatMoney(r.value,currency)}</strong><i style={{width:`${r.value/max*100}%`}}/></button>)}</div> : <Empty text="Nessuna uscita nel periodo selezionato."/>}</section>; }
 
-export function FinanceWorkspace({ businessMode = false, initialView = 'overview' }) {
+export function FinanceWorkspace({ businessMode = false, initialView = 'overview', initialAction = null }) {
   const finance = useFinance(); const {state,status,error,save,undo,canUndo} = finance;
   const [view,setView] = useState(businessMode ? 'business' : views.some(v=>v[0]===initialView)?initialView:'overview'); const [preset,setPreset] = useState('month'); const [period,setPeriod] = useState(()=>getPeriod('month')); const [currency,setCurrency] = useState('EUR');
-  const [modal,setModal] = useState(null); const [notice,setNotice] = useState(''); const [localError,setError] = useState(''); const [confirm,setConfirm] = useState(null); const [txFilters,setTxFilters] = useState({});
+  const [modal,setModal] = useState(() => initialAction === 'new-transaction' ? { kind: 'transaction', record: null } : null); const [notice,setNotice] = useState(''); const [localError,setError] = useState(''); const [confirm,setConfirm] = useState(null); const [txFilters,setTxFilters] = useState({});
   function request(actions, title='Conferma operazione') { setConfirm({actions,title}); setError(''); }
   async function perform(updater,message) { try { await save(updater); setNotice(message); setError(''); return true; } catch(e) { setError(e.message); return false; } }
   async function execute(actions,message='Operazione salvata') { return perform(current=>F.applyFinance(current,actions,uid()),message); }
@@ -48,21 +129,16 @@ export function FinanceWorkspace({ businessMode = false, initialView = 'overview
   const common = {state,currency,period,edit,request,editTransaction,setModal,execute,goTransactions};
   return <div className="finance-workspace"><div className="page-heading"><div><p className="eyebrow">{businessMode ? "MY BUSINESS EMPIRE" : "REGISTRO FINANZIARIO"}</p><h1>{view==='overview'?'Entrate e spese':views.find(v=>v[0]===view)?.[1]}</h1></div><button className="button primary" onClick={()=>businessMode ? edit("orders",{businessId:state.businesses[0]?.id,currency}) : editTransaction()}><Plus size={17}/>{businessMode ? "Nuova vendita" : "Aggiungi movimento"}</button></div>
     <div className="finance-storage"><span className="finance-chip"><ShieldCheck size={13}/>{status==='saving'?'Salvataggio…':finance.storageMode === 'cloud' ? 'Archivio personale online' : 'Dati su questo dispositivo'}</span><button className="text-button" onClick={backup}>Backup JSON <ArrowDownToLine size={13}/></button>{canUndo && <button className="text-button" disabled={status==='saving'} onClick={()=>setConfirm({title:'Annulla ultima modifica',undo:true})}>Annulla ultima modifica</button>}</div>
-    <nav hidden={businessMode} className="finance-nav" aria-label="Sezioni finanziarie">{views.filter(([id])=>['overview','transactions','accounts','planning'].includes(id)).map(([id,label])=><button key={id} className={view===id?'active':''} onClick={()=>{setView(id);setError('');}}>{label}</button>)}</nav>{!businessMode && <details className="finance-more"><summary>Altri strumenti</summary><div>{views.filter(([id])=>!['overview','transactions','accounts','business'].includes(id)).map(([id,label])=><button className="text-button" key={id} onClick={()=>setView(id)}>{label}</button>)}</div></details>}<select className="finance-mobile-select" aria-label="Sezione Finanze" value={view} onChange={e=>setView(e.target.value)}>{views.map(([id,label])=><option key={id} value={id}>{label}</option>)}</select>
-    <div className="finance-toolbar">{view!=='planning' && <div className="finance-period"><select aria-label="Periodo finanziario" value={preset} onChange={e=>{setPreset(e.target.value);if(e.target.value!=='custom')setPeriod(getPeriod(e.target.value));}}>{[['month','Mese corrente'],['previous','Mese precedente'],['3months','Ultimi 3 mesi'],['6months','Ultimi 6 mesi'],['12months','Ultimi 12 mesi'],['year','Anno corrente'],['custom','Personalizzato']].map(([id,label])=><option key={id} value={id}>{label}</option>)}</select><input aria-label="Dal giorno" type="date" value={period.start} onInput={e=>{updatePeriod('start',e.target.value);}} onChange={()=>{}}/><span>—</span><input aria-label="Al giorno" type="date" value={period.end} onInput={e=>{updatePeriod('end',e.target.value);}} onChange={()=>{}}/></div>}<select aria-label="Valuta del report" value={currency} onChange={e=>setCurrency(e.target.value)}>{[...new Set(['EUR',...state.accounts.map(a=>a.currency),...state.assets.map(a=>a.currency)])].map(c=><option key={c}>{c}</option>)}</select></div>
+    <nav hidden={businessMode} className="finance-nav" aria-label="Sezioni finanziarie">{views.filter(([id])=>['overview','transactions','accounts','imports'].includes(id)).map(([id,label])=><button key={id} className={view===id?'active':''} onClick={()=>{setView(id);setError('');}}>{label}</button>)}</nav>
+    <div className="finance-toolbar">{view!=='planning' && <div className="finance-period"><select aria-label="Periodo finanziario" value={preset} onChange={e=>{setPreset(e.target.value);if(e.target.value!=='custom')setPeriod(getPeriod(e.target.value));}}>{[['month','Mese corrente'],['previous','Mese precedente'],['3months','Ultimi 3 mesi'],['6months','Ultimi 6 mesi'],['12months','Ultimi 12 mesi'],['year',`Anno ${todayKey().slice(0,4)}`],['custom','Personalizzato']].map(([id,label])=><option key={id} value={id}>{label}</option>)}</select><input aria-label="Dal giorno" type="date" value={period.start} onInput={e=>{updatePeriod('start',e.target.value);}} onChange={()=>{}}/><span>—</span><input aria-label="Al giorno" type="date" value={period.end} onInput={e=>{updatePeriod('end',e.target.value);}} onChange={()=>{}}/></div>}<select aria-label="Valuta del report" value={currency} onChange={e=>setCurrency(e.target.value)}>{[...new Set(['EUR',...state.accounts.map(a=>a.currency),...state.assets.map(a=>a.currency)])].map(c=><option key={c}>{c}</option>)}</select></div>
     {(localError||error) && <p className="finance-alert" role="alert">{localError||error}</p>}{notice && <div className="finance-notice" role="status"><Check size={16}/>{notice}<button className="icon-button" aria-label="Chiudi avviso" onClick={()=>setNotice('')}><X size={15}/></button></div>}
-    {view==='overview' && <><p className="finance-period-caption">{periodLabel(period)} · Tutti i riepiloghi qui sotto usano queste date.</p><div className="finance-stats"><Stat title="Entrate ricevute" value={report.incomeCents} currency={currency} note="Compensi e altre entrate · trasferimenti esclusi" tone="finance-positive"/><Stat title="Spese del periodo" value={report.expenseCents} currency={currency} note="Al netto dei rimborsi"/><Stat title="Entrate meno spese" value={report.netCents} currency={currency} note="Differenza del periodo, non saldo del conto"/><Stat title="Saldo dei conti" value={report.liquidityCents} currency={currency} note={report.unverifiedAccountIds?.length ? 'Saldi iniziali da verificare' : `Saldo al ${period.end}`}/></div>
-      {!!report.unverifiedAccountIds?.length && <div className="finance-alert"><CircleHelp size={17}/><span>{report.unknownAccountIds.length?`${report.unknownAccountIds.length} conti senza saldo iniziale: liquidità totale non disponibile.`:`${report.unverifiedAccountIds.length} saldi calcolabili, ancora da verificare con l’estratto conto.`}</span><button className="text-button" onClick={()=>setView('accounts')}>Riconcilia saldi <ArrowRight size={14}/></button></div>}
+    {view==='overview' && <><div className="finance-stats"><Stat title="Entrate" value={report.incomeCents} currency={currency} note="Nel periodo selezionato" tone="finance-positive"/><Stat title="Spese" value={report.expenseCents} currency={currency} note="Al netto dei rimborsi"/><Stat title="Bilancio netto" value={report.netCents} currency={currency} note="Entrate meno spese"/><Stat title="Liquidità conti" value={report.liquidityCents} currency={currency} note="Totale disponibile oggi"/></div>
       {!state.accounts.length && <section className="finance-card"><Empty text="Nessun conto registrato. Aggiungi un conto o importa lo storico." action="Aggiungi conto" onClick={()=>edit('accounts')}/><button className="text-button" onClick={()=>setView('imports')}>Importa Money Manager <ArrowRight size={14}/></button></section>}
       <IncomeInsights {...{state,period,currency,execute}} spendingRows={report.categories.map(c=>({id:c.categoryId,name:c.name,value:c.spentCents}))} onSpend={category=>goTransactions(category?{category}:{uncategorized:true})} goPeriod={value=>{setPeriod(value);setPreset('custom');}}/>
-      <details className="finance-secondary"><summary>Come si accumulano entrate e spese nel periodo</summary><FlowChart {...{state,period,currency}}/></details>
-      <section className="panel planning-entry"><div><Compass size={22}/><h2>Prossimi mesi</h2><p>Prova un nuovo cliente, un affitto o un’altra ipotesi e guarda cosa cambia.</p></div><button className="button secondary" onClick={()=>setView('planning')}>Crea un prospetto <ArrowRight size={15}/></button></section>
-      <details className="finance-secondary"><summary>Patrimonio attuale e rilevazioni · indipendenti dal periodo scelto</summary><WealthProgress {...{state,currency,execute}} openAccounts={()=>setView('accounts')}/></details>
-      <details className="finance-secondary"><summary>Patrimonio e obiettivi</summary>      <div className="finance-stats"><Stat title="Patrimonio netto stimato" value={worth.netWorthCents??worth.netCents} currency={currency} note="Attività meno passività · include stime"/><article className="finance-stat"><span>Tasso di risparmio</span><strong>{report.incomeCents>0 ? `${Math.round(report.netCents/report.incomeCents*1000)/10}%` : '—'}</strong><small>{report.incomeCents>0?'Differenza del periodo / entrate effettive':'Entrate insufficienti per il calcolo'}</small></article><article className="finance-stat"><span>Obiettivi di risparmio</span><strong>{state.goals.length}</strong><button className="text-button" onClick={()=>setView('goals')}>Gestisci obiettivi <ArrowRight size={14}/></button></article><article className="finance-stat"><span>Archivio storico</span><strong>{state.importBatches.length}</strong><button className="text-button" onClick={()=>setView('imports')}>Gestisci archivio <ArrowRight size={14}/></button></article></div>
-</details>
-      <section className="finance-card"><header><h2>Ultimi movimenti</h2><button className="text-button" onClick={()=>setView('transactions')}>Tutti i movimenti <ArrowRight size={14}/></button></header><TransactionTable {...common} records={state.transactions.filter(t=>t.date>=period.start&&t.date<=period.end&&t.currency===currency).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6)}/></section></>}
+      <details className="finance-secondary"><summary>Confronto storico per anno (2021–{todayKey().slice(0,4)})</summary><YearlyProgressCard state={state} currency={currency} onSelectYear={y => { setPreset('custom'); setPeriod({ start: `${y}-01-01`, end: y === todayKey().slice(0, 4) ? todayKey() : `${y}-12-31` }); }} /></details>
+      <section className="finance-card"><header><h2>Ultimi movimenti</h2><button className="text-button" onClick={()=>setView('transactions')}>Tutte le transazioni <ArrowRight size={14}/></button></header><TransactionTable {...common} records={state.transactions.filter(t=>t.date>=period.start&&t.date<=period.end&&t.currency===currency).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8)}/></section></>}
     {view==='transactions' && <Transactions {...common} filters={txFilters} setFilters={setTxFilters}/>}
-    {view==='planning' && <CashPlanning key={currency} {...{state,currency,execute}}/>}
+    {view==='planning' && <><HousingSimulatorCard state={state} /><CashPlanning key={currency} {...{state,currency,execute}}/><Goals {...common}/></>}
     {view==='accounts' && <Accounts {...common}/>}
     {view==='wealth' && <Wealth {...common} worth={worth}/>}
     {view==='budgets' && <Budgets {...common}/>}

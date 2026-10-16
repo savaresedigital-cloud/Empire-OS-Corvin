@@ -1,8 +1,5 @@
-EMPIRE OS · CORVIN
+EMPIRE OS 0.7 · MERLINO
 
-Codice pronto per GitHub. Leggi README.md per caricamento e avvio.
+Codice per GitHub e Hostinger Node.js. Apri README.md e docs/HOSTINGER_VERTEX_0.7.md.
 
-App privata online:
-https://empire-os-personale.wigglycow9.chatgpt.site/#today
-
-I dati personali e le chiavi non sono nello ZIP. La copia locale parte con un archivio separato.
+Le credenziali e i dati personali non sono nel pacchetto. Vertex è stato provato sul PC; il server e il database del piano Hostinger richiedono ancora configurazione privata.

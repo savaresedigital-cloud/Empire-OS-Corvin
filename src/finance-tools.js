@@ -112,17 +112,21 @@ export function parseFinanceCommand(text, input, { defaultAccountId = input?.set
   const amountMatch = text.match(/([+-]?\d[\d.,]*)\s*(?:euro|€)/i); if (!amountMatch) return res('Indica l’importo in euro.', { missing: ['amountCents'] });
   let amountCents; try { amountCents = moneyToCents(amountMatch[1]); if (amountCents <= 0) throw new Error('L’importo deve essere maggiore di zero.'); } catch (e) { return res(e.message, { missing: ['amountCents'] }); }
   const dateResult = commandDate(text, now); if (dateResult.error) return res(dateResult.error, { missing: ['date'] });
-  const missing = dateResult.missing ? ['date'] : []; const matches = matchingAccounts(text, state); let account; let to;
+  const matches = matchingAccounts(text, state);
+  const hasRealDefault = (defaultAccountId === 'hype' || (!defaultAccountId && state.accounts.some(a => a.id === 'hype' && a.active && a.openingCents !== null))) && state.accounts.some(a => a.id === 'hype');
+  const effectiveDefaultId = defaultAccountId || (hasRealDefault ? 'hype' : null);
+  const effectiveDate = dateResult.date || (hasRealDefault ? financeDay(now) : null);
+  const missing = !effectiveDate ? ['date'] : []; let account; let to;
   if (transfer) {
     const fromPhrase = normalize(text).match(/\bda\s+(.+?)\s+(?:a|al|ai|alla|alle)\s+(.+?)(?:[.!]|$)/);
     if (fromPhrase) { const froms = matches.filter(a => fromPhrase[1].includes(normalize(a.name))); const tos = matches.filter(a => fromPhrase[2].includes(normalize(a.name))); if (froms.length === 1) account = froms[0]; if (tos.length === 1) to = tos[0]; }
     if (!account) missing.push('accountId'); if (!to) missing.push('toAccountId');
-  } else { account = matches.length === 1 ? matches[0] : !matches.length && defaultAccountId ? state.accounts.find(a => a.id === defaultAccountId && a.active && !['debit', 'aggregate'].includes(a.type)) : null; if (!account) missing.push('accountId'); }
+  } else { account = matches.length === 1 ? matches[0] : !matches.length && effectiveDefaultId ? state.accounts.find(a => a.id === effectiveDefaultId && a.active && !['debit', 'aggregate'].includes(a.type)) : null; if (!account) missing.push('accountId'); }
   if (account && account.currency !== 'EUR' || to && to.currency !== 'EUR') return res('Il conto non usa EUR. Registra una conversione con importi e tasso verificati nella pagina Movimenti.');
   if (missing.length) return res(`${missing.includes('date') ? 'Indica la data: oggi, ieri, domani o YYYY-MM-DD. ' : ''}${missing.some(k => k.includes('Account') || k === 'accountId') ? transfer ? 'Indica conto di origine e destinazione.' : matches.length > 1 ? 'Sono presenti più conti: indica quello da usare.' : 'Indica il conto o seleziona un conto predefinito nelle Finanze.' : ''}`.trim(), { missing });
   const categoryMatches = state.categories.filter(c => c.type !== (expense ? 'income' : 'expense') && n.includes(normalize(c.name))); const categoryId = categoryMatches.length === 1 ? categoryMatches[0].id : null;
   const type = transfer ? 'transfer' : expense ? 'expense' : 'income';
-  const record = { id: crypto.randomUUID(), type, date: dateResult.date, amountCents, currency: 'EUR', accountId: account.id, toAccountId: to?.id ?? null, categoryId, description: text.trim(), status: 'posted', source: 'assistant-local', usedDefaultAccount: !matches.length && !!defaultAccountId };
+  const record = { id: crypto.randomUUID(), type, date: effectiveDate, amountCents, currency: 'EUR', accountId: account.id, toAccountId: to?.id ?? null, categoryId, description: text.trim(), status: 'posted', source: 'assistant-local', usedDefaultAccount: !matches.length && !!effectiveDefaultId };
   const action = { type: 'upsert', args: { collection: 'transactions', record } };
   try { applyFinance(state, action); } catch (e) { return res(e.message); }
   const summary = `${transfer ? 'Trasferimento' : expense ? 'Uscita' : 'Entrata'} ${euros(amountCents)} · ${account.name}${to ? ` → ${to.name}` : ''} · ${record.date}${record.usedDefaultAccount ? ' · conto predefinito' : ''}${categoryId ? ` · ${categoryMatches[0].name}` : ''}`;

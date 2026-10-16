@@ -3,8 +3,19 @@ export const AREAS = [
   { id: 'personale', name: 'Personale', color: '#a4b5ce' },
   { id: 'zerilli', name: 'Gran Caffè Zerilli', color: '#cbb48a' },
   { id: 'rep', name: 'REP Costruzioni', color: '#9bbab5' },
-  { id: 'business', name: 'Business personali', color: '#b9a6cb' },
+  { id: 'business', name: 'Magie Creative & Progetti', color: '#b9a6cb' },
 ];
+export function getAreas(state) {
+  const custom = state?.settings?.areaLabels || {};
+  return AREAS.map(a => ({
+    ...a,
+    name: custom[a.id]?.name?.trim() || a.name,
+    subtitle: custom[a.id]?.subtitle?.trim() || '',
+  }));
+}
+export function getAreaName(state, areaId) {
+  return getAreas(state).find(a => a.id === areaId)?.name || 'Personale';
+}
 const TZ = 'Europe/Rome';
 const areaIds = new Set(AREAS.map(a => a.id));
 const priorities = new Set(['high', 'normal', 'low']);
@@ -167,8 +178,9 @@ export function applyActions(state, actions, operationId) {
     const getTask = () => next.tasks.find(t => t.id === args.id) || fail('Attività non trovata.');
     switch (action.type) {
       case 'create_task': {
-        if (Object.keys(args).some(k => ![...taskKeys, 'id', 'source'].includes(k))) fail('Creazione attività: campo non consentito.');
-        const record = validateTask({ ...args, id: args.id || uid(), createdAt: now, updatedAt: now, completedAt: null, source: args.source || 'manual', version: 1 }, next.tasks.length);
+        if (Object.keys(args).some(k => ![...taskKeys, 'id', 'source', 'completedAt'].includes(k))) fail('Creazione attività: campo non consentito.');
+        const completedAt = args.status === 'done' ? (args.completedAt || (args.dueAt && args.dueAt.length === 10 ? `${args.dueAt}T18:00:00.000Z` : now)) : null;
+        const record = validateTask({ ...args, id: args.id || uid(), createdAt: now, updatedAt: now, completedAt, source: args.source || 'manual', version: 1 }, next.tasks.length);
         if (next.tasks.some(t => t.id === record.id)) fail('ID attività già esistente.');
         next.tasks.push(record); entityId = record.id; break;
       }

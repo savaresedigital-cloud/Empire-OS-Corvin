@@ -3,11 +3,17 @@ dist/
 .env
 .env.*
 !.env.example
+!.env.hostinger.example
+*.pem
+*.key
+*service-account*.json
+*credentials*.json
 *.log
 .sites/
 *.tar.gz
 test-results/
 private-data/
+archivio-reale-pronto/
 docs/AUDIT_DATI.md
 
 worker/assets.generated.js

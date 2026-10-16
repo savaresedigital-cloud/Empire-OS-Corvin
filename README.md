@@ -1,39 +1,32 @@
-# Empire OS · Corvin
+# Empire OS 0.7 · Merlino
 
-App personale con agenda, consigliere, business, finanze e prospetti. Questa copia contiene il codice aggiornato, incluso il castello sullo sfondo e la schermata iniziale senza il riquadro Alessandro.
+Codice pronto per un repository GitHub e per un'app Node.js su Hostinger. Include agenda, finanze, prospetti, memoria del consigliere, accesso personale, salvataggio MySQL e collegamento Vertex AI con Gemini 3.5 Flash-Lite.
 
-App online privata: https://empire-os-personale.wigglycow9.chatgpt.site/#today
+## Pubblicazione Hostinger
 
-## Caricare su GitHub
+1. Carica questo ZIP come nuovo sito Node.js, oppure collega il repository GitHub.
+2. Build: `npm ci && npm run build`.
+3. Avvio: `npm run start:hostinger`; entrypoint `server/hosted.js`.
+4. Configura database, accesso personale e identità Google Cloud seguendo [la guida completa](docs/HOSTINGER_VERTEX_0.7.md). Le variabili sono elencate in `.env.hostinger.example`.
 
-1. Crea un repository su GitHub.
-2. Estrai lo ZIP e apri la cartella Empire-OS-Corvin-GitHub.
-3. Carica i file e le cartelle contenuti al suo interno, inclusi .gitignore, .env.example e .openai/hosting.json. Non caricare soltanto lo ZIP.
+La prova Vertex sul PC è riuscita, anche attraverso il codice dell'app. Il database e il sito del tuo piano Hostinger non sono ancora configurati: la pubblicazione non è automatica caricando il codice.
 
-Non sono inclusi l'archivio personale, i backup, le immagini private dei prodotti, le credenziali, la cartella .git, node_modules o i file generati. Anche gli audit dei dati e i documenti storici interni sono esclusi. I test contengono piccoli esempi e controlli, non l'archivio finanziario.
+## Dati personali
 
-GitHub conserva il codice. I dati già presenti nell'app online restano nel suo archivio privato: non vengono trasferiti o pubblicati caricando questa cartella.
+Il codice non contiene l'archivio finanziario, i backup, le immagini private dei prodotti, password o credenziali Google. I dati già presenti nell'app online restano privati. Il trasferimento usa file personali separati tramite `npm run import:private`; la guida spiega come procedere senza duplicare le transazioni o sovrascrivere un database popolato.
 
-## Avvio locale
+Non caricare credenziali o dati personali su GitHub. I file `.env` privati, le credenziali e le cartelle di backup sono ignorati dal repository.
 
-Serve Node.js 22.12 o successivo. Su Windows fai doppio clic su AVVIA-EMPIRE-OS.bat. Alla prima apertura scarica le dipendenze; poi apre http://localhost:5173/. Lascia la finestra aperta durante l'uso.
+## GitHub e sviluppo
 
-In alternativa:
+Per GitHub carica i file e le cartelle estratti, inclusi `.gitignore` e i due file di esempio `.env`. Serve Node.js 22.12 o successivo.
 
 ```sh
 npm ci
-npm run dev
-```
-
-La copia locale ha un archivio separato e inizialmente vuoto. Il nome Corvin è già salvato nell'app online; nella nuova copia puoi impostarlo aprendo Cosa ricordo e salvando il nome.
-
-L'AI richiede una configurazione separata. Non inserire mai chiavi in file pubblici o nel codice del browser. .env.example contiene solo impostazioni di esempio con chiavi vuote.
-
-## Verifica e compilazione
-
-```sh
 npm test
 npm run build
 ```
 
-Caricare il repository non pubblica automaticamente un'app funzionante. Questa app usa anche un backend: GitHub Pages da solo non lo esegue. La configurazione di un nuovo hosting e del suo archivio va eseguita separatamente.
+`npm run dev` avvia la precedente modalità locale con archivio browser separato. Per usare Vertex e MySQL insieme usa il server `start:hostinger` dopo averlo configurato; conserva i file personali fuori dal codice.
+
+La versione online privata attuale resta disponibile qui: https://empire-os-personale.wigglycow9.chatgpt.site/#today

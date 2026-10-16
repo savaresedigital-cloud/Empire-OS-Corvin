@@ -2,16 +2,21 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function owner(uid) { return request.auth != null && request.auth.uid == uid; }
-    
-    // User personal space: tasks, projects, agenda, finance, and adviser memory
-    match /users/{uid} {
-      allow read, write: if owner(uid) || request.auth == null;
-      
-      match /{allChildren=**} {
-        allow read, write: if owner(uid) || request.auth == null;
+    match /users/{uid}/finance/{document} {
+      allow read, delete: if owner(uid);
+      allow create, update: if owner(uid) && request.resource.data.ownerId == uid;
+    }
+    match /users/{uid}/financeVersions/{version} {
+      allow read, delete: if owner(uid);
+      allow create: if owner(uid) && request.resource.data.ownerId == uid;
+      allow update: if false;
+      match /chunks/{chunk} {
+        allow read, delete: if owner(uid);
+        allow create: if owner(uid) && request.resource.data.ownerId == uid
+          && request.resource.data.data is string && request.resource.data.data.size() <= 250000;
+        allow update: if false;
       }
     }
-
-    match /{document=**} { allow read, write: if request.auth != null; }
+    match /{document=**} { allow read, write: if false; }
   }
 }

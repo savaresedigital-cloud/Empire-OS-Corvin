@@ -1,12 +1,7 @@
 import { FINANCE_COLLECTIONS, validateFinance } from './finance-domain.js';
 
-import firebaseConfig from '../firebase-applet-config.json' with { type: 'json' };
-
 let session = null;
-export const cloudConfiguration = () => ({
-  projectId: import.meta.env?.VITE_FIREBASE_PROJECT_ID || firebaseConfig.projectId || '',
-  apiKey: import.meta.env?.VITE_FIREBASE_API_KEY || firebaseConfig.apiKey || ''
-});
+export const cloudConfiguration = () => ({ projectId: import.meta.env?.VITE_FIREBASE_PROJECT_ID || '', apiKey: import.meta.env?.VITE_FIREBASE_API_KEY || '' });
 export const getCloudSession = () => session;
 const timeout = () => AbortSignal.timeout(30000);
 async function authJson(url, body, fetcher) { const r=await fetcher(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:timeout()});const data=await r.json();if(!r.ok)throw new Error('Accesso Firebase non riuscito. Controlla credenziali e configurazione.');return data; }

@@ -45,4 +45,5 @@ export function projectCash({ incomeCents, expenseCents, extraIncomeCents = 0, e
   });
 }
 
-export const adviserName = settings => !settings.agentName || settings.agentName === 'Nox' ? 'Consigliere' : settings.agentName;
+export const adviserName = settings => !settings.agentName || settings.agentName === 'Nox' ? 'Merlino' : settings.agentName;
+export const displayAdviserName = settings => !settings?.agentName || ['Nox', 'Merlino'].includes(settings.agentName) ? 'Empire AI' : settings.agentName;
